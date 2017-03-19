@@ -2,10 +2,13 @@
 int address_pins[] = {22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,47,49,51,53};
 int data_pins[] = {38,40,42,44,46,48,50,52};
 
+#define RESET 13
+
 int data_pin_num = 8;
 int address_pin_num = 20;
 
-int bus_read(int *pins, int pin_num);
+unsigned long int bus_read(int *pins, int pin_num);
+void reset();
 
 void setup()
 {
@@ -17,15 +20,20 @@ void setup()
         pinMode(data_pins[i], INPUT); 
     }
 
-    Serial.begin(9600);
+    Serial.begin(115200);
+
+    pinMode(RESET, OUTPUT);
+    reset();
+
+    delay(1000);
 
 }
 
 void loop()
 {
 
-    int data = bus_read(data_pins, data_pin_num);
-    int address = bus_read(address_pins, address_pin_num);
+    // int data = bus_read(data_pins, data_pin_num);
+    unsigned long int address = bus_read(address_pins, address_pin_num);
 
     Serial.print("address BIN: ");
     Serial.println(address, BIN);
@@ -41,7 +49,7 @@ void loop()
 
 }
 
-int bus_read(int *pins, int pin_num) {
+unsigned long int bus_read(int *pins, int pin_num) {
 
     char bin[pin_num+1];
     bin[pin_num+1] = '\0';
@@ -55,15 +63,24 @@ int bus_read(int *pins, int pin_num) {
         }
     }
 
-    char *temp = bin;
-    int num = 0;
-    do {
-        int i = (*temp == '1' ? 1 : 0);
-        num = (num << 1) | i;
-        temp++;
-    } while(*temp);
-
-    return num;
+    // bin str to int
+    unsigned long int val = strtol(bin, NULL, 2);
+    return val;
 
 }
 
+void reset() {
+
+    digitalWrite(RESET, HIGH);
+
+    unsigned long previousMillis = 0;
+    unsigned long interval = 50;
+
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        digitalWrite(RESET, LOW);
+    }
+
+}
